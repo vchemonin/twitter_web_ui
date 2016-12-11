@@ -1,0 +1,34 @@
+<html>
+	<body>
+		<p>{{ followers|length }} followers of {{ user_name }}:</p>
+
+		<form method="GET" action="{% url app_name|add:':search' %}">
+			<input type="text" name="screen_name_box" pattern="[a-zA-Z0-9_-]+" size="50" placeholder="screen_name format is: [a-zA-Z0-9_-]+">
+			<input type="submit" value="Search follower by screen_name" >
+		</form>
+
+		{% if is_updated %}
+			<p>Information is completely loaded.</p>
+		{% else %}
+			<p>Due to twitter api rate limit or network problems information hasn't been fully loaded yet and will continue to be loaded as a background task.</p>
+		{% endif %}
+
+		{% for follower in followers %}
+			<p>
+				<a href="{% url app_name|add:':user_data' screen_name=follower.screen_name %}">
+					{{ follower.name }}
+				</a>
+				       	(screen_name: {{ follower.screen_name }})
+			</p>
+		{% endfor %}
+
+		<form action="{% url app_name|add:':force_update' %}">
+			<input type="submit" value="Force update" />
+		</form>
+
+		<form action="{% url app_name|add:':log_out' %}">
+			<input type="submit" value="Log out" />
+		</form>
+
+	</body>
+</html>

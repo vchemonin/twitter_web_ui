@@ -1,0 +1,59 @@
+I've spent about 5 days on this task. 2 days went on studying django and
+twitter API, about 1.5 days on actually writing all the functionality, and
+1.5 days on refactoring code based on the best practices for django and for
+documenting. 
+Mostly I focused on:
+Creating a reusable app with a good DB schema and as much functionality as
+I can implement in a couple of days.
+What has been done and how to use it:
+1) Application supports logging in from different account and shields one
+user's data from others.
+2) It downloads information about user's followers and provides it as a
+list or allows to search by screen_name.
+3) It keeps information about user's followers up-to-date. Every time user
+visits index page the application checks whether more than UPDATE_INTERVAL
+time has passed since the last update, and if it has - downloads the data
+again. For the puropose of testing this interval is set to 5 minutes, but
+it can be changed in twitter_wrapper/settings.py. If a follower has
+unfollowed the user - it is removed from the list. If a follower's
+information has been changed - it is also updated.
+Probable tests: Take a user, log him in and look at his followers. Then
+start following him by another twitter account at look if the new follower
+has appeared. Unfollow him and see if the follower disappears.
+Please, note, that you have to wait UPDATE_INTERVAL time and reload index
+page (/twitter/) in order to see the changes.
+If you don't want to wait UPDATE_INTERVAL, you can press Force Update
+button (at the bottom of the followers list) and update the information
+immediately.
+UPDATE_INTERVAL works the following way: if your user's info is updated
+less than UPDATE_INTERVAL ago, everything you're doing doesn't require
+connection to twitter (or the internet). You're working only with the
+local DB. After UPDATE_INTERVAL time has passed, next time you visit index
+page, an update will be initiated (and page loading will take much more
+time)
+4) If the twitter API rate limit is reached the application continues
+downloading data in a background thread. Until update is completely
+finished in background, main page will contains notification "Due to
+twitter api rate limit or network problems information hasn't been fully
+loaded yet and will continue to be loaded as a background task.". If update
+has been completed, notification says "Information is completely loaded."
+While information is being loaded in background you can still use the
+other functionality of the application - look at follower's info, search by
+screen_name, or even log off and try to do the same under another user.
+Update process will be completed independently.
+5) User information is saved only once. If two users of this application
+have the same follower and log in both - only one entry in the database for
+this follower will be created, but two entry in Follower relation.
+6) twitter_wrapper application is reusable - it doesn't produce any
+unnecessary dependencies.
+What hasn't been done:
+1) I didn't have time to use WSGI server, like gunicorn. That's something
+that should be done if you want to use it in real life.
+2) Background update process stops if you stop the application. It seems
+that API doesn't provide an option for a  partial update - you only can
+start it over again. In this case the only option is to continue update
+after restart by saving the cursor state after each piece of update and
+loading it again if after restart.
+3) Proper error handling should be implemented. At the moment application
+implies that DB is consistent and no crashes happens. That's not realistic
+implications outside a test app.
